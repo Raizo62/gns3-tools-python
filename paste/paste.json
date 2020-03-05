@@ -1,0 +1,6 @@
+{
+    "name": "Paste",
+    "menu": false,
+    "context": "node",
+    "terminal": true
+}

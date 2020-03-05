@@ -1,0 +1,6 @@
+{
+    "name": "Start nodes one-by-one",
+    "context": "node",
+    "terminal": true,
+    "confirm_close": "on_error"
+}

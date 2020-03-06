@@ -78,9 +78,9 @@ gns3a["status"]           = "experimental"
 gns3a["maintainer"]       = "Unknown"
 gns3a["maintainer_email"] = "unknown@example.org"
 for key in ("usage", "symbol", "first_port_name", "port_name_format"):
-    if key in template and template[key]:
+    if template.get(key):
         gns3a[key] = template[key]
-if "linked_clone" in template and not template["linked_clone"]:
+if not template.get("linked_clone", True):
     gns3a["linked_clone"] = False
     gns3a["registry_version"] = 4
 
@@ -93,12 +93,11 @@ if template["template_type"] == "docker":
     docker["adapters"] = template.get("adapters", 1)
     for key in ("image", "start_command", "environment",
                 "console_type", "console_http_port", "console_http_path"):
-        if key in template and template[key]:
+        if template.get(key):
             docker[key] = template[key]
     if docker["image"].endswith(":latest"):
         docker["image"] = docker["image"][:-7]
-    if not ("console_type" in docker and \
-            docker["console_type"] in ("http", "https")):
+    if docker.get("console_type") not in ("http", "https"):
         docker.pop("console_http_port", None)
         docker.pop("console_http_path", None)
 
@@ -109,7 +108,7 @@ elif template["template_type"] == "dynamips":
     for key in ("chassis", "platform", "ram", "nvram", "startup_config",
                 "wic0", "wic1", "wic2", "slot0", "slot1", "slot2", "slot3",
                 "slot4", "slot5", "slot6", "midplane", "npe"):
-        if key in template and template[key]:
+        if template.get(key):
             dynamips[key] = template[key]
     vm_images["image"] = template["image"]
 
@@ -128,45 +127,40 @@ elif template["template_type"] == "qemu":
     gns3a["qemu"] = qemu
     qemu["adapter_type"] = template.get("adapter_type", "e1000")
     qemu["adapters"] = template.get("adapters", 1)
-    if "custom_adapters" in template and template["custom_adapters"]:
+    if template.get("custom_adapters"):
         qemu["custom_adapters"] = template["custom_adapters"]
         gns3a["registry_version"] = max(gns3a["registry_version"], 6)
-    qemu["ram"] = template.get("ram", 128)
-    if "cpus" in template and template["cpus"] > 1:
+    qemu["ram"] = template.get("ram", 256)
+    if template.get("cpus", 1) >= 2:
         qemu["cpus"] = template["cpus"]
         gns3a["registry_version"] = max(gns3a["registry_version"], 4)
     for key in ("kernel_image", "initrd", "bios_image"):
-        if key in template and template[key]:
+        if template.get(key):
             vm_images[key] = template[key]
     if "bios_image" in vm_images:
         gns3a["registry_version"] = max(gns3a["registry_version"], 4)
     for key in ("hda", "hdb", "hdc", "hdd"):
         hd_image = key + "_disk_image"
         hd_intf = key + "_disk_interface"
-        if hd_image in template and template[hd_image]:
+        if template.get(hd_image):
             vm_images[hd_image] = template[hd_image]
-            if hd_intf in template and template[hd_intf] and \
-               template[hd_intf] != "ide":
+            if template.get(hd_intf) and template[hd_intf] != "ide":
                 qemu[hd_intf] = template[hd_intf]
                 if qemu[hd_intf] == "sata":
                     gns3a["registry_version"] = max(gns3a["registry_version"], 4)
-    if "cdrom_image" in template and template["cdrom_image"]:
+    if template.get("cdrom_image"):
         vm_images["cdrom_image"] = template["cdrom_image"]
     match = re.search(r'qemu-system-([^/\\]*)$', template["qemu_path"])
     if match:
         qemu["arch"] = match.group(1)
     else:
         qemu["arch"] = "i386"
-    if "console_type" in template and template["console_type"]:
-        qemu["console_type"] = template["console_type"]
-        if qemu["console_type"] == "spice":
-            gns3a["registry_version"] = max(gns3a["registry_version"], 5)
-    else:
-        qemu["console_type"] = "telnet"
-    if "boot_priority" in template and template["boot_priority"] and \
-       template["boot_priority"] != "c":
+    qemu["console_type"] = template.get("console_type", "telnet")
+    if qemu["console_type"] == "spice":
+        gns3a["registry_version"] = max(gns3a["registry_version"], 5)
+    if template.get("boot_priority") and template["boot_priority"] != "c":
         qemu["boot_priority"] = template["boot_priority"]
-    if "kernel_command_line" in template and template["kernel_command_line"]:
+    if template.get("kernel_command_line"):
         qemu["kernel_command_line"] = template["kernel_command_line"]
     qemu["kvm"] = "allow"
     options = template.get("options")
@@ -178,9 +172,9 @@ elif template["template_type"] == "qemu":
         options = options.strip()
     if options:
         qemu["options"] = options
-    if "cpu_throttling" in template and template["cpu_throttling"]:
+    if template.get("cpu_throttling"):
         qemu["cpu_throttling"] = template["cpu_throttling"]
-    if "process_priority" in template and template["process_priority"] and \
+    if template.get("process_priority") and \
        template["process_priority"] != "normal":
         qemu["process_priority"] = template["process_priority"]
 
@@ -216,14 +210,15 @@ if vm_images:
     gns3a["images"] = images
     version_ver = OrderedDict()
     version_ver["name"] = image_version
-    if "idlepc" in template and template["idlepc"]:
+    if template.get("idlepc"):
         version_ver["idlepc"] = template["idlepc"]
     version_ver["images"] = version_images
     gns3a["versions"] = [version_ver]
 
 # save appliance
 ofile = widget.get_save_filename("Save appliance", "~",
-                                 (("GNS3 Appliance", "*.gns3a *.gns3appliance"), ("all files", "*")))
+                                 (("GNS3 Appliance", "*.gns3a *.gns3appliance"),
+                                  ("all files", "*")))
 if not ofile:
     sys.exit(0)
 try:

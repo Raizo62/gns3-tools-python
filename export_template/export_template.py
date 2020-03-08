@@ -20,8 +20,8 @@ def die(text):
 
 
 # get command line parameter
-if len(sys.argv) < 4:
-    die("usage: export_template version parameter-file project-id [sel-item ...]")
+if len(sys.argv) < 3:
+    die("usage: export_template version parameter-file [project-id [sel-item ...]]")
 try:
     with open(sys.argv[2], "r") as file:
         cntl_url, cntl_user, cntl_passwd, *_ = file.read(512).splitlines()

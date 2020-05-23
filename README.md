@@ -17,6 +17,7 @@ These tools are licensed under the GPLv3 license.
 
 ## Tools
 
+- adapter_count   - change the number of adapters
 - close_project   - close current GNS3 project
 - console_port    - change console port of one or more nodes
 - export_template - export template as GNS3 appliance

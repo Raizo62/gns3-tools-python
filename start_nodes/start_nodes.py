@@ -7,7 +7,21 @@ start_nodes - start nodes of a project one by one
 import os
 import sys
 import time
+import itertools
 import gns3api
+
+def start_node_list(api, node_list):
+    for i, node in enumerate(node_list):
+        if i > 0:
+            yield node
+        while True:
+            compute = api.request('GET', ('/v2/computes', node['compute_id']))
+            if compute['cpu_usage_percent'] < 60.0:
+                break
+            yield node
+        print("Starting '{}'".format(node['name']))
+        api.request("POST", ("/v2/projects", node['project_id'],
+                             'nodes', node['node_id'], 'start'))
 
 def start_nodes(argv):
     """ parse command line, retrieve nodes and start nodes one by one """
@@ -52,23 +66,23 @@ def start_nodes(argv):
 
     sel_nodes.sort(key=lambda k: nodes[k]['name'].lower())
 
-    # start nodes
-    print("Starting nodes one by one")
+    # create nodes list per compute
+    compute_nodes = {}
     for node_id in sel_nodes:
         node = nodes[node_id]
-        if node['status'] == 'started':
-            continue
-        time.sleep(3)
-        while True:
-            compute = api.request('GET', ('/v2/computes', node['compute_id']))
-            if compute['cpu_usage_percent'] < 60.0:
-                break
-            time.sleep(10)
-        print("Starting '{}'".format(node['name']))
-        try:
-            api.request("POST", ("/v2/projects", project_id, 'nodes', node['node_id'], 'start'))
-        except gns3api.GNS3ApiException as err:
-            sys.exit(str(err))
+        if node['status'] != 'started':
+            compute_nodes.setdefault(node['compute_id'], []).append(node)
+
+    # iterate through compute_nodes and start them
+    print("Starting nodes one by one")
+    nodes_iter = [start_node_list(api, node_list)
+                  for node_list in compute_nodes.values()]
+    try:
+        for node in itertools.zip_longest(*nodes_iter):
+            time.sleep(4)
+    except gns3api.GNS3ApiException as err:
+        sys.exit("Can't start node: {}".format(err))
+
 
 try:
     start_nodes(sys.argv)

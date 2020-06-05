@@ -7,21 +7,26 @@ start_nodes - start nodes of a project one by one
 import os
 import sys
 import time
-import itertools
 import gns3api
 
 def start_node_list(api, node_list):
-    for i, node in enumerate(node_list):
-        if i > 0:
-            yield node
+    """ start nodes, yield sleeps the specified number of seconds """
+    delay_next_node = 0
+    for node in node_list:
+        if delay_next_node > 0:		# delay between starting nodes
+            yield delay_next_node
         while True:
             compute = api.request('GET', ('/v2/computes', node['compute_id']))
             if compute['cpu_usage_percent'] < 60.0:
                 break
-            yield node
+            yield 4			# test again in 4 seconds
         print("Starting '{}'".format(node['name']))
         api.request("POST", ("/v2/projects", node['project_id'],
                              'nodes', node['node_id'], 'start'))
+        if node['node_type'] in ("qemu", "virtualbox", "vmware"):
+            delay_next_node = 4
+        else:
+            delay_next_node = 2
 
 def start_nodes(argv):
     """ parse command line, retrieve nodes and start nodes one by one """
@@ -75,13 +80,24 @@ def start_nodes(argv):
 
     # iterate through compute_nodes and start them
     print("Starting nodes one by one")
-    nodes_iter = [start_node_list(api, node_list)
-                  for node_list in compute_nodes.values()]
-    try:
-        for node in itertools.zip_longest(*nodes_iter):
-            time.sleep(4)
-    except gns3api.GNS3ApiException as err:
-        sys.exit("Can't start node: {}".format(err))
+    tasks = {compute_id: {
+                'iter': start_node_list(api, compute_nodes[compute_id]),
+                'delay': 0}
+             for compute_id in compute_nodes}
+    while tasks:
+        delay = min([tasks[compute_id]['delay'] for compute_id in tasks])
+        if delay > 0.09:
+            time.sleep(delay)
+        for compute_id in list(tasks.keys()):
+            tasks[compute_id]['delay'] -= delay
+            if tasks[compute_id]['delay'] <= 0.09:
+                try:
+                    tasks[compute_id]['delay'] = \
+                        max(0, next(tasks[compute_id]['iter']))
+                except StopIteration:
+                    del tasks[compute_id]
+                except gns3api.GNS3ApiException as err:
+                    sys.exit("Can't start node: {}".format(err))
 
 
 try:

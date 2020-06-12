@@ -1,16 +1,16 @@
 # GNS3 Tools
 
 This is my collection of tools, integrated into the GNS3 GUI, see
-<https://www.bernhard-ehlers.de/blog/posts/2018-01-12-gns3-integrate-programs/>
+<https://www.b-ehlers.de/blog/posts/2018-01-12-gns3-integrate-programs/>
 for details.
 These tools are licensed under the GPLv3 license.
 
 ## Prerequisites
 
 - Python 3 installed
-- [gns3-gui-tools](https://git.bernhard-ehlers.de/ehlers/gns3-gui-tools)
+- [gns3-gui-tools](https://git.b-ehlers.de/ehlers/gns3-gui-tools)
   integrated into GNS3.
-- [gns3api](https://git.bernhard-ehlers.de/ehlers/gns3api)
+- [gns3api](https://git.b-ehlers.de/ehlers/gns3api)
   installed or copied to the GNS3/tools folder.
 - The simple widget modules qt_widgets.py and tk_widgets.py
   copied to the GNS3/tools folder.

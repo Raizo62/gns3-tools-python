@@ -144,10 +144,9 @@ elif template["template_type"] == "qemu":
         hd_intf = key + "_disk_interface"
         if template.get(hd_image):
             vm_images[hd_image] = template[hd_image]
-            if template.get(hd_intf) and template[hd_intf] != "ide":
-                qemu[hd_intf] = template[hd_intf]
-                if qemu[hd_intf] == "sata":
-                    gns3a["registry_version"] = max(gns3a["registry_version"], 4)
+            qemu[hd_intf] = template.get(hd_intf, "ide")
+            if qemu[hd_intf] == "sata":
+                gns3a["registry_version"] = max(gns3a["registry_version"], 4)
     if template.get("cdrom_image"):
         vm_images["cdrom_image"] = template["cdrom_image"]
     match = re.search(r'qemu-system-([^/\\]*)$', template["qemu_path"])

@@ -10,7 +10,7 @@ These tools are licensed under the GPLv3 license.
 - Python 3 installed
 - [gns3-gui-tools](https://git.b-ehlers.de/ehlers/gns3-gui-tools)
   integrated into GNS3.
-- [gns3api](https://git.b-ehlers.de/ehlers/gns3api)
+- [gns3api](https://git.b-ehlers.de/ehlers/gns3api-python)
   installed or copied to the GNS3/tools folder.
 - The simple widget modules qt_widgets.py and tk_widgets.py
   copied to the GNS3/tools folder.
